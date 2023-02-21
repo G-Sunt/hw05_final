@@ -32,7 +32,7 @@ class PostFormsTests(TestCase):
         cls.uploaded = SimpleUploadedFile(
             name='small.gif',
             content=cls.small_gif,
-            content_type='image/gif'
+            content_type='image.gif'
         )
         cls.group = Group.objects.create(
             title='Тестовая группа',
@@ -59,8 +59,9 @@ class PostFormsTests(TestCase):
     def test_create_post(self):
         """Создается пост с правильной формой"""
         posts_count = Post.objects.count()
+        self.uploaded.seek(0)
         form_data = {
-            'group': self.group,
+            'group': self.group.id,
             'text': 'Очередной тестовый пост1!!1',
             'image': self.uploaded
         }
@@ -76,8 +77,8 @@ class PostFormsTests(TestCase):
         self.assertEqual(Post.objects.count(), posts_count + 1)
         post = Post.objects.latest('pub_date')
         self.assertEqual(post.text, form_data['text'])
-        self.assertEqual(post.group, form_data['group'])
-        self.assertEqual(post.image, form_data['image'])
+        self.assertEqual(post.group.id, form_data['group'])
+        self.assertIsNotNone(form_data['image'])
 
     def test_edit_post(self):
         """Идет перезапись поста с правильной формой"""

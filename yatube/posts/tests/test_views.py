@@ -178,7 +178,7 @@ class PostViewTests(TestCase):
         cache.clear()
         post_text_cache_clear = self.authorized_client.get(
             reverse('posts:index')).content
-        self.assertEqual(post_text_add, post_text_cache_clear)
+        self.assertNotEqual(post_text_add, post_text_cache_clear)
 
 
 class PaginatorViewsTest(TestCase):

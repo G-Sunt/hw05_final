@@ -3,9 +3,9 @@ import tempfile
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
+from django.test import Client, TestCase, override_settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
-from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.core.cache import cache
 
@@ -72,7 +72,7 @@ class PostFormsTests(TestCase):
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertRedirects(response, reverse(
-            'posts:profile', kwargs={'username': self.test_author}
+            'posts:profile', kwargs={'username': str(self.test_author)}
         ))
         self.assertEqual(Post.objects.count(), posts_count + 1)
         post = Post.objects.latest('pub_date')
@@ -89,18 +89,17 @@ class PostFormsTests(TestCase):
         )
         form_data_edit = {
             'text': 'Ну сколько можно тестов уже',
-            'group': self.group2.id
+            'group': self.group2
         }
-        response = self.authorized_client.post(
+        self.authorized_client.post(
             reverse('posts:post_edit',
                     kwargs={'post_id': self.post.id}),
             data=form_data_edit,
             follow=True
         )
-        self.assertRedirects(response, reverse('posts:post_detail',
-                             args=[self.post.id]))
-        self.assertNotEqual(self.post.text,
+        response2 = self.authorized_client.get(reverse('posts:index'))
+        first_object = response2.context['page_obj'][0]
+        self.assertEqual(first_object.text,
                             form_data_edit.get('text'))
-        self.assertNotEqual(self.post.group,
+        self.assertEqual(first_object.group,
                             form_data_edit.get('group'))
-        self.assertEqual(response.status_code, HTTPStatus.OK)

@@ -36,11 +36,11 @@ class PostURLTests(TestCase):
         templates_pages_names = {
             reverse('posts:index'): 'posts/index.html',
             reverse('posts:group_list',
-                    args={self.group.slug}): 'posts/group_list.html',
+                    args=[self.group.slug]): 'posts/group_list.html',
             reverse('posts:profile',
-                    args={self.post.author}): 'posts/profile.html',
+                    args=[str(self.post.author)]): 'posts/profile.html',
             reverse('posts:post_detail',
-                    args={self.post.id}): 'posts/post_detail.html',
+                    args=[self.post.id]): 'posts/post_detail.html',
             reverse('posts:post_create'): 'posts/create_post.html',
             reverse('posts:post_edit',
                     kwargs={'post_id': self.post.pk}): 'posts/create_post.html'
@@ -65,22 +65,40 @@ class PostURLTests(TestCase):
 
     def test_urls_exists_at_desired_location_auth_users(self):
         """Страница create/ доступна авторизованному пользователю"""
-        responce = self.authorized_client.get(reverse('posts:post_create'))
-        self.assertEqual(responce.status_code, HTTPStatus.OK)
+        response = self.authorized_client.get(reverse('posts:post_create'))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+    
+    def test_urls_not_available_create_post_for_guest(self):
+        """Создание поста недоступна гостю"""
+        guest = PostURLTests.guest_client
+        response = guest.get(reverse('posts:post_create'))
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_unexisting_page(self):
         """Запрос к несуществующей странице вернет ошибку 404"""
-        responce = self.guest_client.get('/unexisting_page/')
-        self.assertEqual(responce.status_code, HTTPStatus.NOT_FOUND)
-        self.assertTemplateUsed(responce, 'core/404.html')
+        response = self.guest_client.get('/unexisting_page/')
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, 'core/404.html')
 
     def test_post_edit_author(self):
         """Автор может редактировать свой пост"""
-        auth = PostURLTests.authorized_client
-        guest = PostURLTests.guest_client
-        responce = auth.get(reverse('posts:post_edit',
+        self.auth = PostURLTests.authorized_client
+        response = self.auth.get(reverse('posts:post_edit',
                             kwargs={'post_id': self.post.pk}))
-        responce2 = guest.get(reverse('posts:post_edit',
-                              kwargs={'post_id': self.post.pk}))
-        self.assertEqual(responce.status_code, HTTPStatus.OK)
-        self.assertEqual(responce2.status_code, HTTPStatus.FOUND)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+
+    def test_post_edit_guest(self):
+        """Гость не может редактировать пост"""
+        self.guest = PostURLTests.guest_client
+        response = self.guest.get(reverse('posts:post_edit',
+                             kwargs={'post_id': self.post.pk}))
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+
+    def test_post_edit_not_author(self):
+        """Другие пользователи не могут редактировать чужой пост"""
+        self.user2 = User.objects.create_user(username='auth2')
+        self.authorized_client2 = Client()
+        self.authorized_client2.force_login(self.user2)
+        response = self.authorized_client2.get(
+            reverse('posts:post_edit', kwargs={'post_id': self.post.pk}))
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)

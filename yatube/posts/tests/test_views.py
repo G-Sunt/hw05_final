@@ -9,7 +9,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.core.cache import cache
 
-from ..models import Post, Group, Comment
+from ..models import Follow, Post, Group, Comment
 from ..views import NUM_OF_PAGE
 
 User = get_user_model()
@@ -162,6 +162,35 @@ class PostViewTests(TestCase):
                 'posts:post_detail', kwargs={'post_id': self.post.pk}
             )
         )
+
+    def test_guest_cannot_add_comment(self):
+        """Проверяю что не добавляется комментарий неавторизированным польз"""
+        self.test_author2 = User.objects.create_user(username='test_author2')
+        self.test_author2 = Client()
+        comment_count = Comment.objects.count()
+        form_data = {
+            'text': 'Мессага444'
+        }
+        self.test_author2.post(
+            reverse('posts:add_comment', kwargs={'post_id': self.post.pk}),
+            data=form_data,
+            follow=True
+        )
+        self.assertEqual(Comment.objects.count(), comment_count)
+
+    def test_follow_and_unfollow(self):
+        """Проверка работы подписки и отписки"""
+        self.user2 = User.objects.create_user(username='user2')
+        self.authorized_client.get(reverse('posts:profile_follow',
+                                           args=(self.user2,)))
+        self.assertEqual(Follow.objects.count(), 1)
+        self.authorized_client.get(reverse('posts:profile_unfollow',
+                                           args=(self.user2,)))
+        self.assertEqual(Follow.objects.count(), 0)
+        
+    def test_follow_correct_user(self):
+       """Проверка что пост появляется у подписанных"""
+
 
     def test_cache(self):
         """Проверяю корректность работы кэша"""

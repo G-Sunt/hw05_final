@@ -180,17 +180,14 @@ class PostViewTests(TestCase):
 
     def test_follow_and_unfollow(self):
         """Проверка работы подписки и отписки"""
+        follow_count = Follow.objects.count()
         self.user2 = User.objects.create_user(username='user2')
         self.authorized_client.get(reverse('posts:profile_follow',
                                            args=(self.user2,)))
-        self.assertEqual(Follow.objects.count(), 1)
+        self.assertEqual(Follow.objects.count(), follow_count + 1)
         self.authorized_client.get(reverse('posts:profile_unfollow',
                                            args=(self.user2,)))
-        self.assertEqual(Follow.objects.count(), 0)
-        
-    def test_follow_correct_user(self):
-       """Проверка что пост появляется у подписанных"""
-
+        self.assertEqual(Follow.objects.count(), follow_count)
 
     def test_cache(self):
         """Проверяю корректность работы кэша"""

@@ -67,7 +67,7 @@ class PostURLTests(TestCase):
         """Страница create/ доступна авторизованному пользователю"""
         response = self.authorized_client.get(reverse('posts:post_create'))
         self.assertEqual(response.status_code, HTTPStatus.OK)
-    
+
     def test_urls_not_available_create_post_for_guest(self):
         """Создание поста недоступна гостю"""
         guest = PostURLTests.guest_client
@@ -84,14 +84,14 @@ class PostURLTests(TestCase):
         """Автор может редактировать свой пост"""
         self.auth = PostURLTests.authorized_client
         response = self.auth.get(reverse('posts:post_edit',
-                            kwargs={'post_id': self.post.pk}))
+                                 kwargs={'post_id': self.post.pk}))
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_post_edit_guest(self):
         """Гость не может редактировать пост"""
         self.guest = PostURLTests.guest_client
         response = self.guest.get(reverse('posts:post_edit',
-                             kwargs={'post_id': self.post.pk}))
+                                  kwargs={'post_id': self.post.pk}))
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_post_edit_not_author(self):

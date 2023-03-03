@@ -80,7 +80,7 @@ def post_create(request):
         post = form.save(commit=False)
         post.author = request.user
         post.save()
-        return redirect('posts:profile', request.user)
+        return redirect('posts:profile', request.user.username)
     context = {
         'form': form
     }
@@ -138,8 +138,8 @@ def profile_follow(request, username):
     user = request.user
     if author != user:
         Follow.objects.get_or_create(user=user, author=author)
-        return redirect('posts:profile', str(user))
-    return redirect('posts:profile', str(user))
+        return redirect('posts:profile', request.user.username)
+    return redirect('posts:profile', request.user.username)
 
 
 @login_required

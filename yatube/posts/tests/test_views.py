@@ -165,13 +165,13 @@ class PostViewTests(TestCase):
 
     def test_guest_cannot_add_comment(self):
         """Проверяю что не добавляется комментарий неавторизированным польз"""
-        self.test_author2 = User.objects.create_user(username='test_author2')
-        self.test_author2 = Client()
+        test_author2 = User.objects.create_user(username='test_author2')
+        test_author2 = Client()
         comment_count = Comment.objects.count()
         form_data = {
             'text': 'Мессага444'
         }
-        self.test_author2.post(
+        test_author2.post(
             reverse('posts:add_comment', kwargs={'post_id': self.post.pk}),
             data=form_data,
             follow=True
@@ -181,12 +181,12 @@ class PostViewTests(TestCase):
     def test_follow_and_unfollow(self):
         """Проверка работы подписки и отписки"""
         follow_count = Follow.objects.count()
-        self.user2 = User.objects.create_user(username='user2')
+        user2 = User.objects.create_user(username='user2')
         self.authorized_client.get(reverse('posts:profile_follow',
-                                           args=(self.user2,)))
+                                           args=(user2,)))
         self.assertEqual(Follow.objects.count(), follow_count + 1)
         self.authorized_client.get(reverse('posts:profile_unfollow',
-                                           args=(self.user2,)))
+                                           args=(user2,)))
         self.assertEqual(Follow.objects.count(), follow_count)
 
     def test_cache(self):
